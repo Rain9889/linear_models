@@ -184,12 +184,24 @@ modelr::add_predictions(nyc_airbnb, fit)
 ``` r
 nyc_airbnb |> 
   modelr::add_residuals(fit) |> 
+  ggplot(aes(x = resid)) + 
+  geom_density() +
+  xlim(-100,500)
+```
+
+    ## Warning: Removed 12086 rows containing non-finite values (`stat_density()`).
+
+![](linear_models_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+
+``` r
+nyc_airbnb |> 
+  modelr::add_residuals(fit) |> 
   ggplot(aes(x = borough, y = resid)) + geom_violin()
 ```
 
     ## Warning: Removed 9962 rows containing non-finite values (`stat_ydensity()`).
 
-![](linear_models_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](linear_models_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 nyc_airbnb |> 
@@ -199,6 +211,26 @@ nyc_airbnb |>
 
     ## Warning: Removed 9962 rows containing missing values (`geom_point()`).
 
-![](linear_models_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](linear_models_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 # Hypothesis testing
+
+Fit a “null” and “alternative” model
+
+``` r
+fit_null = lm(price ~ stars + borough, data = nyc_airbnb)
+fit_alt = lm(price ~ stars + borough + room_type, data = nyc_airbnb)
+```
+
+``` r
+anova(fit_null, fit_alt) |> 
+  broom::tidy()
+```
+
+    ## # A tibble: 2 × 7
+    ##   term                        df.residual    rss    df   sumsq statistic p.value
+    ##   <chr>                             <dbl>  <dbl> <dbl>   <dbl>     <dbl>   <dbl>
+    ## 1 price ~ stars + borough           30525 1.01e9    NA NA            NA       NA
+    ## 2 price ~ stars + borough + …       30523 9.21e8     2  8.42e7     1394.       0
+
+# Nesting data
