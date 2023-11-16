@@ -82,3 +82,45 @@ sim_df_nonconst |>
 | x           |    3.112 |     0.075 |    41.661 |       0 |
 
 # Drawing one bootstrap sample
+
+Start with a little function
+
+``` r
+boot_sample = function(df){
+  
+  sample_frac(df, replace = TRUE)
+}
+```
+
+Let’s see how it works
+
+``` r
+sim_df_nonconst |> 
+  boot_sample() |> 
+  ggplot(aes(x = x, y = y)) +
+  geom_point(alpha = .5) +
+  stat_smooth(menthos = "lm")
+```
+
+    ## Warning in stat_smooth(menthos = "lm"): Ignoring unknown parameters: `menthos`
+
+    ## `geom_smooth()` using method = 'loess' and formula = 'y ~ x'
+
+![](cross_validation_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+``` r
+n_samp = 250
+
+sim_df_const = 
+  tibble(
+    x = rnorm(n_samp, 1, 1),
+    error = rnorm(n_samp, 0, 1),
+    y = 2 + 3 * x + error
+  )
+
+sim_df_nonconst = sim_df_const |> 
+  mutate(
+  error = error * .75 * x,
+  y = 2 + 3 * x + error
+)
+```
