@@ -1,7 +1,7 @@
-linear_models
+Bootstrapping
 ================
 Yuxuan Wang
-2023-11-11
+2023-11-16
 
 ``` r
 library(tidyverse)
@@ -270,3 +270,46 @@ boot_straps |>
     ## `geom_smooth()` using formula = 'y ~ x'
 
 ![](cross_validation_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+# Airbnb data
+
+Let’s fit a regression of `price` on other variables and look at
+residuals
+
+``` r
+data("nyc_airbnb")
+
+nyc_airbnb = 
+  nyc_airbnb |> 
+  mutate(stars = review_scores_location / 2) |> 
+  rename(
+    borough = neighbourhood_group,
+    neighborhood = neighbourhood) |> 
+  filter(borough != "Staten Island") |> 
+  drop_na(price, stars) |> 
+  select(price, stars, borough, neighborhood, room_type)
+
+nyc_airbnb |> 
+  ggplot(aes(x = stars, y = price, color = room_type)) + 
+  geom_point()
+```
+
+![](cross_validation_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+run a bootstrap in this whole thing ti get estimate for the effect of
+`stars` on `price`
+
+``` r
+nyc_airbnb |> 
+  filter(borough == "Manhattan") |> 
+  modelr::bootstrap(n = 1000) |> 
+  mutate(
+    models = map(strap, \(df) lm(price ~ stars + room_type, data = df)),
+    results = map(models, broom::tidy)) |> 
+  select(results) |> 
+  unnest(results) |> 
+  filter(term == "stars") |> 
+  ggplot(aes(x = estimate)) + geom_density()
+```
+
+![](cross_validation_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->

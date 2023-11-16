@@ -1,7 +1,7 @@
 ---
-title: "linear_models"
+title: "Bootstrapping"
 author: "Yuxuan Wang"
-date: "2023-11-11"
+date: "2023-11-16"
 output: github_document
 ---
 
@@ -153,5 +153,43 @@ boot_straps |>
   ggplot(aes(x = x, y = y)) + 
   geom_line(aes(group = strap_number), stat = "smooth", method = "lm", se = FALSE, alpha = .1, color = "blue") +
   geom_point(data = sim_df_nonconst, alpha = .5)
+```
+
+# Airbnb data
+
+Let's fit a regression of `price` on other variables and look at residuals
+
+```{r}
+data("nyc_airbnb")
+
+nyc_airbnb = 
+  nyc_airbnb |> 
+  mutate(stars = review_scores_location / 2) |> 
+  rename(
+    borough = neighbourhood_group,
+    neighborhood = neighbourhood) |> 
+  filter(borough != "Staten Island") |> 
+  drop_na(price, stars) |> 
+  select(price, stars, borough, neighborhood, room_type)
+
+nyc_airbnb |> 
+  ggplot(aes(x = stars, y = price, color = room_type)) + 
+  geom_point()
+```
+
+
+run a bootstrap in this whole thing ti get estimate for the effect of `stars` on `price`
+
+```{r}
+nyc_airbnb |> 
+  filter(borough == "Manhattan") |> 
+  modelr::bootstrap(n = 1000) |> 
+  mutate(
+    models = map(strap, \(df) lm(price ~ stars + room_type, data = df)),
+    results = map(models, broom::tidy)) |> 
+  select(results) |> 
+  unnest(results) |> 
+  filter(term == "stars") |> 
+  ggplot(aes(x = estimate)) + geom_density()
 ```
 
